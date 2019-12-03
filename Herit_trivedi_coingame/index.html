@@ -1,0 +1,231 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Moving sprites</title>
+<body>
+<script src="pixi.min.js"></script>
+<script>
+
+//Aliases
+let Application = PIXI.Application,
+    Container = PIXI.Container,
+    loader = PIXI.loader,
+    resources = PIXI.loader.resources,
+    TextureCache = PIXI.utils.TextureCache,
+    Sprite = PIXI.Sprite;
+
+    let width = 512;
+    let height = 512;
+//Create a Pixi Application
+let array = [1,2,3,5,10,20,100,1000];
+
+let app = new Application({ 
+    width: width, 
+    height: height,                       
+    antialiasing: true, 
+    transparent: false, 
+    resolution: 1
+  }
+);
+
+let accumulator = 0.0;
+
+//Add the canvas that Pixi automatically created for you to the HTML document
+document.body.appendChild(app.view);
+loader
+  .add("images/cat.png", {crossOrigin: 'anonymous'})
+  .add("images/win_up_to_1k.png", {crossOrigin: 'anonymous'})
+  .add("images/play_button.png", {crossOrigin: 'anonymous'})
+  .add("images/game_panel_01.png", {crossOrigin: 'anonymous'})
+  .add("images/coin0001.png", {crossOrigin: 'anonymous'})
+  .add("images/coin0002.png", {crossOrigin: 'anonymous'})
+  .add("images/coin0003.png", {crossOrigin: 'anonymous'})
+  .add("images/coin0004.png", {crossOrigin: 'anonymous'})
+  .add("images/coin0005.png", {crossOrigin: 'anonymous'})
+  .add("images/coin0006.png", {crossOrigin: 'anonymous'})
+  .add("images/coin0007.png", {crossOrigin: 'anonymous'})
+  .add("images/coin0008.png", {crossOrigin: 'anonymous'})
+  .add("images/coin0009.png", {crossOrigin: 'anonymous'})
+  .add("images/coin0010.png", {crossOrigin: 'anonymous'})
+  .add("images/coin0011.png", {crossOrigin: 'anonymous'})
+  .add("images/coin0012.png", {crossOrigin: 'anonymous'})
+  .add("images/coin0013.png", {crossOrigin: 'anonymous'})
+  .add("images/coin0014.png", {crossOrigin: 'anonymous'})
+  .add("images/coin0015.png", {crossOrigin: 'anonymous'})
+  .add("images/coin0016.png", {crossOrigin: 'anonymous'})
+  .add("images/coin0017.png", {crossOrigin: 'anonymous'})
+  .add("images/coin0018.png", {crossOrigin: 'anonymous'})
+  .add("images/coin0019.png", {crossOrigin: 'anonymous'})
+  .add("images/coin0020.png", {crossOrigin: 'anonymous'})
+  .add("images/coin0021.png", {crossOrigin: 'anonymous'})
+  .add("images/coin0022.png", {crossOrigin: 'anonymous'})
+  .add("images/coin0023.png", {crossOrigin: 'anonymous'})
+  .add("images/prize_1.png", {crossOrigin: 'anonymous'})
+  .add("images/prize_2.png", {crossOrigin: 'anonymous'})
+  .add("images/prize_3.png", {crossOrigin: 'anonymous'})
+  .add("images/prize_5.png", {crossOrigin: 'anonymous'})
+  .add("images/prize_10.png", {crossOrigin: 'anonymous'})
+  .add("images/prize_20.png", {crossOrigin: 'anonymous'})
+  .add("images/prize_100.png", {crossOrigin: 'anonymous'})
+  .add("images/prize_1000.png", {crossOrigin: 'anonymous'})
+  .add("images/win_txt.png", {crossOrigin: 'anonymous'})
+  .load(setup);
+
+
+
+//Define any variables that are used in more than one function
+let cat;
+var scene = 1;
+let winTitle;
+let playButton;
+let gamePanel;
+let coin;
+var coinAnimation = false;
+let prize;
+var amountAnimation = false;
+var winAnimation = false;
+let winCongrats;
+
+let textureArray = [];
+let animatedSprite;
+
+const capguyFrames = [ 
+    "images/coin0001.png",
+    "images/coin0002.png",
+    "images/coin0003.png",
+    "images/coin0004.png",
+    "images/coin0005.png",
+    "images/coin0006.png",
+    "images/coin0007.png",
+    "images/coin0008.png",
+    "images/coin0009.png",
+    "images/coin0010.png",
+    "images/coin0011.png",
+    "images/coin0012.png",
+    "images/coin0013.png",
+    "images/coin0014.png",
+    "images/coin0015.png",
+    "images/coin0016.png",
+    "images/coin0017.png",
+    "images/coin0018.png",
+    "images/coin0019.png",
+    "images/coin0020.png",
+    "images/coin0021.png",
+    "images/coin0022.png",
+    "images/coin0023.png"
+];
+
+function setup() {
+
+  winTitle = new Sprite(resources["images/win_up_to_1k.png"].texture);
+  winTitle.scale.x = 0.7;
+  winTitle.scale.y = 0.7;
+  winTitle.y = 10; 
+  winTitle.x = (width/2) - (winTitle.width/2);
+  app.stage.addChild(winTitle);
+
+  playButton = new Sprite(resources["images/play_button.png"].texture);
+  playButton.scale.x = 0.7;
+  playButton.scale.y = 0.7;
+  playButton.y = 200; 
+  playButton.x = 150;
+  playButton.interactive = true;
+  playButton.on('mouseup', clickPlayButton);
+  app.stage.addChild(playButton);
+
+
+  animatedSprite = PIXI.extras.AnimatedSprite.fromFrames(capguyFrames);
+  
+
+  app.ticker.add(delta => gameLoop(delta));
+}
+
+function clickPlayButton(eventData)
+{
+    app.stage.removeChild(playButton);
+    app.stage.removeChild(winTitle);
+
+    gamePanel = new Sprite(resources["images/game_panel_01.png"].texture);
+    gamePanel.scale.x = 0.7;
+    gamePanel.scale.y = 0.7;
+    gamePanel.y = 50; 
+    gamePanel.x = 100;
+    app.stage.addChild(gamePanel);
+
+    /*
+    coin = new Sprite(resources["images/coin0001.png"].texture);
+    coin.y = 140; 
+    coin.x = 140;
+    coin.interactive = true;
+    coin.on('mouseup', coinAnim);
+    //app.stage.addChild(coin);
+    */
+
+    app.stage.addChild(animatedSprite);
+    animatedSprite.animationSpeed = 0.167;
+    animatedSprite.interactive = true;
+    animatedSprite.on('mouseup', coinAnim);
+    animatedSprite.y = 140; 
+    animatedSprite.x = 140;
+    animatedSprite.play();
+
+}
+
+function coinAnim(eventData) {
+  coinAnimation = true;
+}
+
+
+
+function gameLoop(delta){
+
+    if(coinAnimation && accumulator >= (0.167 * 23)) {
+      coinAnimation = false;
+      //app.stage.removeChild(coin);
+      var min=0; 
+      var max=8;  
+      var random = Math.random() * (+max - +min) + +min;
+      random = Math.floor(random);
+      console.log(random);
+      let image = "images/prize_" + array[random] +".png";
+      console.log(image);
+      prize = new Sprite(resources[image].texture);
+      prize.scale.x = 0;
+      prize.scale.y = 0;
+      prize.y = (height/2) - (prize.height/2); 
+      prize.x = (width/2) - (prize.width/2);
+      app.stage.addChild(prize);
+      amountAnimation = true;
+      app.stage.removeChild(animatedSprite);
+    }
+
+    if(amountAnimation &&  prize.scale.x>=1) {
+      amountAnimation = false;
+      winCongrats = new Sprite(resources["images/win_txt.png"].texture);
+      winCongrats.scale.x= 0.4;
+      winCongrats.scale.y= 0.4;
+      winCongrats.x = 80;
+      winCongrats.y = 100;
+      app.stage.addChild(winCongrats);
+    }
+
+    if(winAnimation) {
+    }
+
+    if(amountAnimation) {
+      prize.scale.x += 0.1;
+      prize.scale.y += 0.1;
+      prize.y = (height/2) - (prize.height * prize.scale.y/2); 
+      prize.x = (width/2) - (prize.width * prize.scale.x/2);
+    }
+
+
+    if(coinAnimation) {
+      accumulator += delta;
+    }
+
+}
+
+
+</script>
+</body>
+
